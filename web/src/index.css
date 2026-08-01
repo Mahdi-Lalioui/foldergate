@@ -1,13 +1,161 @@
 @import 'tailwindcss';
 
+/* Self-hosted, bundled by Vite. Never a Google Fonts CDN import: the issue forbids
+   runtime CDN dependencies, and venue wifi must not be able to change our typography. */
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/700.css';
+
 /* Security-console dark. The demo room is dark and a projector washes out mid-tones,
-   so contrast is deliberately high. */
+   so contrast is deliberately high.
+
+   The palette has one rule that governs everything: RED AND GREEN BELONG TO THE VERDICT.
+   Nothing else in this UI may use them -- no red buttons, no green success states. The
+   whole product is one binary judgement, so those two hues have to stay unambiguous.
+   Every piece of chrome (CTAs, focus rings, progress, the DEFANG action) is amber, which
+   belongs to neither pole, reads as "caution / gate", and survives projector washout
+   better than any other accent. */
+@theme {
+  --color-bg: #0b0f14;
+  --color-surface: #111820;
+  --color-surface-2: #161e28;
+  --color-line: #1f2a37;
+  --color-fg: #e6edf3;
+  --color-fg-muted: #8b99a8;
+
+  --color-accent: #f59e0b;
+  --color-accent-dim: #7c4a02;
+
+  /* Reserved. Verdict only. */
+  --color-danger: #ef4444;
+  --color-safe: #22c55e;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+}
+
 :root {
   color-scheme: dark;
 }
 
 body {
-  background: #0b0f14;
-  color: #e6edf3;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Char counts and file sizes must not jitter while animating. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Display type wants tighter tracking than Inter's default. */
+.display {
+  letter-spacing: -0.02em;
+}
+
+/* One soft amber bloom behind the hero. This is the only decorative gradient in the
+   app -- depth elsewhere comes from 1px hairlines, not drop shadows. */
+.hero-glow::before {
+  content: '';
+  position: absolute;
+  inset: -40% 0 auto 50%;
+  translate: -50% 0;
+  width: min(900px, 120vw);
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgb(245 158 11 / 0.1), transparent 62%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Focus is always amber and always visible. Never remove the ring. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* An invisible character, made visible. Rendered inline inside the decoded text so the
+   smuggled payload is legible as a physical thing occupying space in the file. */
+.ghost {
+  display: inline-block;
+  transform: translateY(-1px);
+  border-radius: 3px;
+  background: rgb(239 68 68 / 0.16);
+  outline: 1px solid rgb(239 68 68 / 0.4);
+  color: #fca5a5;
+  font-family: var(--font-mono);
+  font-size: 0.62em;
+  line-height: 1.5;
+  padding: 0 3px;
+  margin: 0 1px;
+}
+
+/* Entrance motion is CSS, deliberately, and this is a demo-safety decision rather than a
+   stylistic one.
+
+   A JS animation library sets `opacity: 0` inline before its first frame runs. If that
+   frame never arrives -- a backgrounded tab, a throttled renderer, a display switch
+   mid-presentation -- the content stays invisible forever. CSS animations advance on the
+   document timeline and, if they never run at all, simply leave the element at its normal
+   visible style. Fail-visible, not fail-blank.
+
+   For a verdict banner that a room full of judges is looking at, that difference decides
+   whether the demo survives a bad moment. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+}
+
+/* The verdict flip. Slight overshoot so it lands rather than fades.
+
+   Deliberately animates TRANSFORM ONLY -- never opacity. This is the one element the whole
+   room is looking at, and an opacity keyframe frozen at 0% is an invisible verdict. Frozen
+   at 0% here, the banner is merely offset by a few pixels: still perfectly legible. */
+@keyframes verdict-in {
+  0% {
+    transform: translateY(14px) scale(0.96);
+  }
+  60% {
+    transform: translateY(0) scale(1.012);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.anim-rise {
+  animation: rise 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.anim-slide {
+  animation: slide-in 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.anim-verdict {
+  animation: verdict-in 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
