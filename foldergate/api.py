@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from foldergate.contract import Defanged, Emulation, Finding, ScanReport
 from foldergate.emulate import emulate as run_emulation
+from foldergate.repository import RepositoryError, materialize_repository
 from foldergate.scanner import scan as static_scan
 
 app = FastAPI(title="FolderGate", version="0.1.0")
@@ -83,14 +84,20 @@ def _stub_report(repo_url: str) -> ScanReport:
 @app.post("/api/scan", response_model=ScanReport)
 async def scan(req: ScanRequest) -> ScanReport:
     try:
-        findings = static_scan(req.repo_url)
-    except (FileNotFoundError, NotADirectoryError, PermissionError) as error:
+        findings = await run_in_threadpool(_scan_materialized, req.repo_url)
+    except (FileNotFoundError, NotADirectoryError, PermissionError, RepositoryError) as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
     return ScanReport(
         repo_url=req.repo_url,
         verdict="quarantined" if findings else "clean",
         findings=findings,
     )
+
+
+def _scan_materialized(source: str) -> list[Finding]:
+    """Resolve a URL or path and keep its temporary clone alive through scanning."""
+    with materialize_repository(source) as repository:
+        return static_scan(repository)
 
 
 class EmulateRequest(BaseModel):
