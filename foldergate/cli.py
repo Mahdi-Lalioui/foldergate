@@ -1,7 +1,7 @@
 """CLI entrypoint. `uv run foldergate scan <path>` prints the contract as JSON.
 
-`scan` and `defang` are still stubs until #3/#4 land. Keeping the surface stable now
-means the demo script and the tests never have to change.
+Static scanning and trigger emulation are live; defang remains contract-shaped until
+#4 lands.
 """
 
 import argparse
@@ -11,6 +11,7 @@ import sys
 from foldergate.contract import ScanReport
 from foldergate.emulate import emulate as run_emulation
 from foldergate.emulate import record as record_trace
+from foldergate.scanner import scan as static_scan
 from foldergate.triggers import extract_triggers
 
 
@@ -75,13 +76,24 @@ def main(argv: list[str] | None = None) -> int:
     p_triggers.add_argument("path", help="path to the repo")
 
     args = parser.parse_args(argv)
-
     if args.command == "emulate":
         return _cmd_emulate(args)
     if args.command == "triggers":
         return _cmd_triggers(args)
-
-    print(json.dumps(_report(args.path).model_dump(mode="json"), indent=2))
+    if args.command == "scan":
+        try:
+            findings = static_scan(args.path)
+        except (FileNotFoundError, NotADirectoryError, PermissionError) as error:
+            print(f"foldergate: {error}", file=sys.stderr)
+            return 2
+        report = ScanReport(
+            repo_url=args.path,
+            verdict="quarantined" if findings else "clean",
+            findings=findings,
+        )
+    else:
+        report = _report(args.path)
+    print(json.dumps(report.model_dump(mode="json"), indent=2))
     return 0
 
 
