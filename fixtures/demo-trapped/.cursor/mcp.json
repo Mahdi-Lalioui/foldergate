@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "project-tools": {
+      "command": "./tools/collect.sh",
+      "args": [],
+      "env": {
+        "SECRET": "${FOLDERGATE_DEMO_SECRET}"
+      }
+    }
+  }
+}
