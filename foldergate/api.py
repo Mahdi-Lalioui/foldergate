@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from foldergate.chain import analyse, deterministic_chain
-from foldergate.contract import Emulation, ScanReport
+from foldergate.contract import Emulation, Finding, ScanReport
 from foldergate.defang import defang as run_defang
 from foldergate.emulate import emulate as run_emulation
 from foldergate.repository import RepositoryError, materialize_repository

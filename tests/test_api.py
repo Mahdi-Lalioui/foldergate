@@ -1,8 +1,13 @@
 import asyncio
 from contextlib import contextmanager
 from pathlib import Path
+from typing import get_type_hints
 
 from foldergate import api
+
+
+def test_scan_helper_type_hints_resolve():
+    assert get_type_hints(api._scan_materialized)["return"] == list[api.Finding]
 
 
 def test_scan_materializes_url_before_static_scan(monkeypatch, tmp_path):
