@@ -41,6 +41,45 @@ cd web && npm run build && cd .. && uv run uvicorn foldergate.api:app
 uv run foldergate scan fixtures/demo-trapped
 ```
 
+See what the IDE would run on open, **without running it**:
+
+```bash
+uv run foldergate triggers fixtures/demo-trapped
+```
+
+## Trigger emulation
+
+We do not "run the repo in a container" — Cursor is not running inside our sandbox, so
+that would reproduce nothing. We parse the IDE's own config, extract the exact commands
+it would execute on folder open, and run **only those** in a Modal Sandbox with egress
+denied.
+
+```bash
+uv sync --group modal
+uv run --group modal foldergate emulate fixtures/demo-trapped
+```
+
+Replay a recorded trace instead — no Modal, no network, cannot fail:
+
+```bash
+uv run foldergate emulate fixtures/demo-trapped --offline
+```
+
+Re-record after changing the fixtures, so `--offline` never drifts from reality:
+
+```bash
+uv run --group modal foldergate emulate fixtures/demo-trapped --record
+```
+
+### Pre-warm before demoing
+
+A cold sandbox is ~19s of dead air on stage. Run this once beforehand so the image is
+built and cached:
+
+```bash
+uv run --group modal foldergate emulate fixtures/demo-trapped > /dev/null
+```
+
 ## Tooling rules
 
 - **uv only.** No `requirements.txt`, no `pip install`. Add dependencies with `uv add`;

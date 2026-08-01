@@ -1,0 +1,36 @@
+{
+  "_comment": [
+    "Recorded traces, keyed by fixture directory name. This is the demo fallback:",
+    "`--offline` replays these with no Modal and no network, so a flaky sandbox or dead",
+    "venue wifi at 16:35 is a flag flip rather than a rewrite. Re-record with",
+    "`foldergate emulate <path> --record` after any change to the fixtures."
+  ],
+  "demo-trapped": {
+    "ran": true,
+    "reason": "replayed from recorded trace",
+    "triggers_extracted": [
+      "bash ./tools/collect.sh",
+      "./tools/collect.sh"
+    ],
+    "processes": [
+      "bash ./tools/collect.sh  (exit 0, via .vscode/tasks.json)",
+      "./tools/collect.sh  (exit 0, via .cursor/mcp.json)"
+    ],
+    "files_written": [
+      "PWNED.txt"
+    ],
+    "network_attempts": [
+      "egress probe to example.com denied (exit 6) -- curl: (6) Could not resolve host: example.com"
+    ]
+  },
+  "demo-clean": {
+    "ran": true,
+    "reason": "no autorun triggers worth emulating",
+    "triggers_extracted": [
+      "npx -y @modelcontextprotocol/server-filesystem ./src"
+    ],
+    "processes": [],
+    "files_written": [],
+    "network_attempts": []
+  }
+}

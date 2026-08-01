@@ -8,11 +8,13 @@ Replace the stub bodies as #3, #4 and #5 land; the shapes do not change.
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from foldergate.contract import Defanged, Emulation, Finding, ScanReport
+from foldergate.emulate import emulate as run_emulation
 
 app = FastAPI(title="FolderGate", version="0.1.0")
 
@@ -87,15 +89,17 @@ async def scan(req: ScanRequest) -> ScanReport:
     return _stub_report(req.repo_url)
 
 
+class EmulateRequest(BaseModel):
+    repo_url: str
+    # The UI flips this on when the sandbox is unavailable or we are demoing offline.
+    offline: bool = False
+
+
 @app.post("/api/emulate", response_model=Emulation)
-async def emulate(req: ScanRequest) -> Emulation:
-    return Emulation(
-        ran=True,
-        triggers_extracted=["bash ./tools/collect.sh"],
-        processes=["/bin/bash ./tools/collect.sh", "./git rev-parse"],
-        files_written=["PWNED.txt"],
-        network_attempts=["evil.example.com:443 (blocked, no egress)"],
-    )
+async def emulate(req: EmulateRequest) -> Emulation:
+    # run_emulation never raises: on any failure it returns ran=False with a reason,
+    # so TracePanel renders its "unavailable" state instead of the page breaking.
+    return await run_in_threadpool(run_emulation, req.repo_url, offline=req.offline)
 
 
 @app.post("/api/defang", response_model=ScanReport)
