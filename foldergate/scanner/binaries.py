@@ -8,7 +8,14 @@ from foldergate.contract import Finding
 from foldergate.scanner._shared import relative_name
 
 SHADOWED_COMMANDS = frozenset({"git", "node", "npm", "python"})
-EXECUTABLE_EXTENSIONS = frozenset({".exe", ".bat", ".cmd", ".sh", ".ps1"})
+
+# Windows runs these off the extension alone, so the extension is the whole signal.
+WINDOWS_EXECUTABLE_EXTENSIONS = frozenset({".exe", ".bat", ".cmd", ".ps1"})
+# On Unix an extension means nothing without the exec bit. Flagging every .sh would
+# light up on any repo that ships a build script -- a false positive so common it
+# would train people to ignore us. A non-executable script cannot run on open.
+UNIX_SCRIPT_EXTENSIONS = frozenset({".sh"})
+EXECUTABLE_EXTENSIONS = WINDOWS_EXECUTABLE_EXTENSIONS | UNIX_SCRIPT_EXTENSIONS
 IGNORED_DIRECTORIES = frozenset({".git", ".venv", "node_modules", "__pycache__"})
 
 
@@ -51,7 +58,11 @@ def scan_binaries(root: Path) -> list[Finding]:
         )
 
     for path in _repo_files(root):
-        if path in primary_paths or path.suffix.casefold() not in EXECUTABLE_EXTENSIONS:
+        suffix = path.suffix.casefold()
+        if path in primary_paths or suffix not in EXECUTABLE_EXTENSIONS:
+            continue
+        # A Unix script is only a payload if something can actually execute it.
+        if suffix in UNIX_SCRIPT_EXTENSIONS and not os.access(path, os.X_OK):
             continue
         name = relative_name(path, root)
         findings.append(
