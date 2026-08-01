@@ -52,6 +52,12 @@ export default function VerdictBanner({ verdict, findingCount, defanging }: Prop
       <div
         className={`pointer-events-none absolute -top-24 -left-24 size-72 rounded-full blur-3xl ${s.glow}`}
       />
+      {/* The shockwave. Fires once per verdict because the whole node is remounted by
+          `key`, so the flip lands as an impact rather than a fade. */}
+      <div
+        aria-hidden
+        className={`anim-shock pointer-events-none absolute top-1/2 left-8 size-40 -translate-y-1/2 rounded-full border-2 ${s.ring} opacity-0`}
+      />
       <div className="relative flex items-center gap-4 sm:gap-5">
         <s.Icon
           strokeWidth={1.6}

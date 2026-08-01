@@ -36,10 +36,12 @@ export default function KillChain({ killChain, findings }: Props) {
       )}
 
       <ol className="relative mt-8 space-y-1">
-        {/* The rail. Sits behind the nodes and stops short of the last one. */}
+        {/* The rail draws itself downward while the nodes ignite in sequence beneath it,
+            so the chain visibly propagates: rules file infects MCP config infects task
+            runner infects planted binary. A static list cannot say that. */}
         <div
           aria-hidden
-          className="absolute top-4 bottom-8 left-[19px] w-px bg-gradient-to-b from-accent/60 via-accent/30 to-transparent"
+          className="anim-rail absolute top-4 bottom-8 left-[19px] w-px bg-gradient-to-b from-accent/70 via-accent/35 to-transparent"
         />
 
         {ordered.map((f, i) => {
@@ -51,8 +53,14 @@ export default function KillChain({ killChain, findings }: Props) {
               style={{ animationDelay: `${80 + i * 70}ms` }}
               className="anim-slide relative flex gap-4 pb-6 last:pb-0"
             >
-              <div className="relative z-10 flex size-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface-2">
+              <div
+                style={{ animationDelay: `${120 + i * 190}ms` }}
+                className="anim-ignite relative z-10 flex size-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface-2"
+              >
                 <Icon size={17} className="text-accent" />
+                <span className="absolute -right-1 -bottom-1 flex size-4 items-center justify-center rounded-full border border-line bg-bg font-mono text-[9px] text-fg-muted">
+                  {i + 1}
+                </span>
               </div>
 
               <div className="min-w-0 pt-1">

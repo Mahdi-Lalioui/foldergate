@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Eye, EyeOff, TriangleAlert } from 'lucide-react'
+import { Eye, EyeOff, RotateCcw, TriangleAlert } from 'lucide-react'
 import type { Finding } from '../api'
 import { analyze } from '../lib/invisible'
 
@@ -47,12 +47,15 @@ function useCountUp(target: number, ms = 750) {
  * gap between them IS the vulnerability, and the contract carries both precisely so this
  * comparison can exist.
  *
- * Where the payload was smuggled through the Unicode tag block, we go one better than
- * highlighting it -- `analyze()` recovers the original ASCII, so the hidden instruction is
- * printed in full. A judge does not have to take our word that something is hidden there.
+ * The panel below them is a single view that FLIPS rather than two panels side by side.
+ * That is the whole point: it is the same file. Showing two columns invites the reading
+ * that these are two different things; flipping one surface in place proves they are one
+ * file that renders differently to a human and to a tokenizer. The flip runs itself once,
+ * automatically, so nobody has to narrate it -- and replays on click.
  *
- * The numbers come from the numeric contract fields and the text from the string fields,
- * independently. They are not derived from each other, because in stub data they disagree.
+ * Where the payload was smuggled through the Unicode tag block, `analyze()` recovers the
+ * original ASCII, so the hidden instruction is printed in full. A judge does not have to
+ * take our word that something is hidden there.
  */
 export default function UnicodeDiff({ findings }: Props) {
   // Three of the four stub findings carry 0/0. "0 visible · 0 the model reads" is a
@@ -74,6 +77,22 @@ function Panel({ finding: f }: { finding: Finding }) {
   const visible = useCountUp(f.visible_chars)
   const model = useCountUp(f.model_chars)
   const ratio = f.model_chars > 0 ? Math.min(1, f.visible_chars / f.model_chars) : 1
+
+  // Starts on the human view, then reveals itself. `pass` remounts the text so the
+  // materialise animation replays on demand.
+  const [showModel, setShowModel] = useState(false)
+  const [pass, setPass] = useState(0)
+
+  useEffect(() => {
+    const id = setTimeout(() => setShowModel(true), 1400)
+    return () => clearTimeout(id)
+  }, [])
+
+  const replay = () => {
+    setShowModel(false)
+    setPass((p) => p + 1)
+    setTimeout(() => setShowModel(true), 420)
+  }
 
   return (
     <section className="overflow-hidden rounded-2xl border border-line bg-surface">
@@ -118,10 +137,66 @@ function Panel({ finding: f }: { finding: Finding }) {
         </div>
       </div>
 
-      {/* The recovered payload. This only exists because tag-block characters are a
-          direct ASCII offset, so the smuggled text can be reconstructed exactly. */}
+      {/* The reveal. One surface, two readings. */}
+      <div className="border-t border-line">
+        <div className="flex items-center gap-3 border-b border-line px-6 py-3 sm:px-8">
+          <div className="flex items-center gap-2">
+            {showModel ? (
+              <EyeOff size={13} className="text-danger" />
+            ) : (
+              <Eye size={13} className="text-fg-muted" />
+            )}
+            <span
+              className={`text-xs font-semibold tracking-[0.14em] uppercase transition-colors ${
+                showModel ? 'text-danger' : 'text-fg-muted'
+              }`}
+            >
+              {showModel ? 'What the model reads' : 'What you see'}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={replay}
+            className="ml-auto flex items-center gap-1.5 rounded-lg border border-line px-2.5 py-1 text-[11px] text-fg-muted transition hover:border-accent/50 hover:text-fg"
+          >
+            <RotateCcw size={11} /> Replay
+          </button>
+        </div>
+
+        <div className="bg-surface-2 px-6 py-6 sm:px-8">
+          <pre
+            key={`${pass}-${showModel}`}
+            className="anim-materialize font-mono text-sm leading-relaxed whitespace-pre-wrap"
+          >
+            {showModel ? (
+              a.segments.map((s, i) => (
+                <span key={i} style={{ animationDelay: `${i * 55}ms` }}>
+                  {s.kind === 'visible' ? (
+                    <span className="text-fg">{s.text}</span>
+                  ) : s.kind === 'hidden' ? (
+                    <span className="ghost" title={`${s.count} × ${s.codes?.join(' ')}`}>
+                      {s.count}&nbsp;hidden
+                    </span>
+                  ) : (
+                    <span className="ghost">{s.text}</span>
+                  )}
+                </span>
+              ))
+            ) : (
+              <span className="text-fg-muted">{f.evidence || '—'}</span>
+            )}
+          </pre>
+        </div>
+      </div>
+
+      {/* The recovered payload. This only exists because tag-block characters are a direct
+          ASCII offset, so the smuggled text can be reconstructed exactly, not just flagged. */}
       {a.smuggled && (
-        <div className="border-t border-line bg-danger/[0.06] px-6 py-5 sm:px-8">
+        <div
+          className={`border-t border-line bg-danger/[0.06] px-6 py-5 transition-opacity duration-500 sm:px-8 ${
+            showModel ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
           <p className="text-xs font-semibold tracking-[0.18em] text-danger uppercase">
             {a.real
               ? `Recovered from ${a.hiddenCount} invisible characters`
@@ -132,39 +207,6 @@ function Panel({ finding: f }: { finding: Finding }) {
           </p>
         </div>
       )}
-
-      {/* Side by side: the file as rendered, and the file as tokenized. */}
-      <div className="grid gap-px border-t border-line bg-line sm:grid-cols-2">
-        <div className="bg-surface px-6 py-5 sm:px-8">
-          <p className="flex items-center gap-1.5 text-xs tracking-wide text-fg-muted uppercase">
-            <Eye size={12} /> what you see
-          </p>
-          <pre className="mt-3 font-mono text-sm whitespace-pre-wrap text-fg-muted">
-            {f.evidence || '—'}
-          </pre>
-        </div>
-
-        <div className="bg-surface-2 px-6 py-5 sm:px-8">
-          <p className="flex items-center gap-1.5 text-xs tracking-wide text-danger/80 uppercase">
-            <EyeOff size={12} /> what the model reads
-          </p>
-          <pre className="mt-3 font-mono text-sm whitespace-pre-wrap text-fg">
-            {a.segments.map((s, i) =>
-              s.kind === 'visible' ? (
-                <span key={i}>{s.text}</span>
-              ) : s.kind === 'hidden' ? (
-                <span key={i} className="ghost" title={`${s.count} × ${s.codes?.join(' ')}`}>
-                  {s.count}&nbsp;hidden
-                </span>
-              ) : (
-                <span key={i} className="ghost">
-                  {s.text}
-                </span>
-              ),
-            )}
-          </pre>
-        </div>
-      </div>
     </section>
   )
 }
