@@ -1,13 +1,8 @@
-"""FastAPI app: three routes plus the built UI, on one port with no CORS.
-
-Every route currently returns a contract-shaped stub. That is the point -- the UI
-workstream builds against these from minute one and never waits for the scanner.
-Replace the stub bodies as #3, #4 and #5 land; the shapes do not change.
-"""
+"""FastAPI app: three routes plus the built UI, on one port with no CORS."""
 
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -15,6 +10,7 @@ from pydantic import BaseModel
 
 from foldergate.contract import Defanged, Emulation, Finding, ScanReport
 from foldergate.emulate import emulate as run_emulation
+from foldergate.scanner import scan as static_scan
 
 app = FastAPI(title="FolderGate", version="0.1.0")
 
@@ -86,7 +82,15 @@ def _stub_report(repo_url: str) -> ScanReport:
 
 @app.post("/api/scan", response_model=ScanReport)
 async def scan(req: ScanRequest) -> ScanReport:
-    return _stub_report(req.repo_url)
+    try:
+        findings = static_scan(req.repo_url)
+    except (FileNotFoundError, NotADirectoryError, PermissionError) as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    return ScanReport(
+        repo_url=req.repo_url,
+        verdict="quarantined" if findings else "clean",
+        findings=findings,
+    )
 
 
 class EmulateRequest(BaseModel):
