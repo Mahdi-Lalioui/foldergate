@@ -9,8 +9,16 @@ node_modules/
 web/dist/
 
 .env
+# ...but the demo fixtures carry a deliberately fake .env the payload targets.
+!fixtures/demo-trapped/.env
 .DS_Store
 
 # Payload artifacts dropped by the demo fixtures. Never commit these -- fixtures/reset.sh
 # removes them, and a committed PWNED.txt makes the "nothing fires" moment a lie.
 PWNED.txt
+
+# NOTE: we deliberately do NOT gitignore the .Cursorrules case twin. On a
+# case-insensitive filesystem git matches ignore patterns case-insensitively, so a
+# `.Cursorrules` rule would also swallow the real `.cursorrules`. reset.sh only
+# materialises the twin on case-sensitive machines; if it shows as untracked there,
+# that is cosmetic and expected.
