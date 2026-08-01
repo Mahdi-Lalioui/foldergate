@@ -1,14 +1,17 @@
 """CLI entrypoint. `uv run foldergate scan <path>` prints the contract as JSON.
 
-Static scanning and trigger emulation are live; defang remains contract-shaped until
-#4 lands.
+Every stage is live: static scan, chain analysis, trigger emulation and defang.
+`defang` re-scans its own output before reporting, so "clean" is verified rather
+than asserted.
 """
 
 import argparse
 import json
 import sys
 
+from foldergate.chain import analyse, deterministic_chain
 from foldergate.contract import ScanReport
+from foldergate.defang import defang as run_defang
 from foldergate.emulate import emulate as run_emulation
 from foldergate.emulate import record as record_trace
 from foldergate.scanner import scan as static_scan
@@ -51,6 +54,17 @@ def main(argv: list[str] | None = None) -> int:
     ]:
         p = sub.add_parser(name, help=help_text)
         p.add_argument("path", help="path to the repo")
+        p.add_argument(
+            "--no-ai",
+            action="store_true",
+            help="skip the chain-analysis call and use the deterministic summary",
+        )
+        if name == "defang":
+            p.add_argument(
+                "--out",
+                default=None,
+                help="output directory (default ~/foldergate/clean/<repo>)",
+            )
 
     p_emulate = sub.add_parser(
         "emulate", help="extract the IDE's trigger paths and run only those, sandboxed"
@@ -80,19 +94,32 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_emulate(args)
     if args.command == "triggers":
         return _cmd_triggers(args)
-    if args.command == "scan":
+
+    try:
+        findings = static_scan(args.path)
+    except (FileNotFoundError, NotADirectoryError, PermissionError) as error:
+        print(f"foldergate: {error}", file=sys.stderr)
+        return 2
+
+    report = analyse(
+        ScanReport(repo_url=args.path, findings=findings),
+        use_ai=not getattr(args, "no_ai", False),
+    )
+
+    if args.command == "defang":
         try:
-            findings = static_scan(args.path)
-        except (FileNotFoundError, NotADirectoryError, PermissionError) as error:
+            report.defanged = run_defang(args.path, args.out)
+        except (OSError, ValueError) as error:
             print(f"foldergate: {error}", file=sys.stderr)
             return 2
-        report = ScanReport(
-            repo_url=args.path,
-            verdict="quarantined" if findings else "clean",
-            findings=findings,
-        )
-    else:
-        report = _report(args.path)
+        # Re-scan the OUTPUT and report on that. Claiming a repo is clean without
+        # re-checking it would be exactly the kind of unverified assertion this
+        # tool exists to catch.
+        report.findings = static_scan(report.defanged.output_path)
+        report.verdict = "quarantined" if report.findings else "clean"
+        report.kill_chain = deterministic_chain(report.findings)
+        print(f"# clean copy written to {report.defanged.output_path}", file=sys.stderr)
+
     print(json.dumps(report.model_dump(mode="json"), indent=2))
     return 0
 

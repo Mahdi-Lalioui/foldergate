@@ -31,7 +31,31 @@ def _is_invisible(char: str) -> bool:
 
 
 def _rule_paths(root: Path) -> list[Path]:
-    paths = {root / name for name in RULE_FILES if (root / name).is_file()}
+    """Resolve rule files from real directory entries, not by probing candidate names.
+
+    Probing `(root / name).is_file()` is wrong on a case-insensitive filesystem --
+    which is what macOS and Windows demo machines are. There, `.Cursorrules` reports
+    True when only `.cursorrules` exists, so the same inode gets scanned twice and
+    `_case_collisions` then invents a collision between a file and itself.
+
+    Listing the directory and matching case-insensitively returns only names that
+    genuinely exist on disk.
+    """
+    paths: set[Path] = set()
+
+    flat = {name.casefold() for name in RULE_FILES if "/" not in name}
+    try:
+        for entry in root.iterdir():
+            if entry.name.casefold() in flat and entry.is_file():
+                paths.add(entry)
+    except OSError:
+        pass
+
+    # Nested candidates (e.g. .github/copilot-instructions.md) are unambiguous.
+    for name in RULE_FILES:
+        if "/" in name and (root / name).is_file():
+            paths.add(root / name)
+
     cursor_rules = root / ".cursor" / "rules"
     if cursor_rules.is_dir():
         paths.update(path for path in cursor_rules.rglob("*") if path.is_file())
@@ -108,6 +132,18 @@ def _case_collisions(paths: list[Path], root: Path) -> list[Finding]:
     for names in grouped.values():
         unique = sorted(set(names))
         if len(unique) < 2:
+            continue
+        # Two names are only a real collision if they are two real files. On a
+        # case-insensitive checkout they can alias to one inode, and reporting that
+        # as an attack is a false positive on the machine we demo from.
+        inodes = set()
+        for name in unique:
+            try:
+                stat = (root / name).stat()
+                inodes.add((stat.st_dev, stat.st_ino))
+            except OSError:
+                continue
+        if len(inodes) < 2:
             continue
         findings.append(
             Finding(

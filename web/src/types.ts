@@ -55,26 +55,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * No Build
-         * @description Keep the backend usable on a fresh clone, before anyone has run npm.
-         */
-        get: operations["_no_build__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -95,6 +75,16 @@ export interface components {
              * @default
              */
             output_path: string;
+        };
+        /** EmulateRequest */
+        EmulateRequest: {
+            /** Repo Url */
+            repo_url: string;
+            /**
+             * Offline
+             * @default false
+             */
+            offline: boolean;
         };
         /**
          * Emulation
@@ -203,6 +193,11 @@ export interface components {
         ScanRequest: {
             /** Repo Url */
             repo_url: string;
+            /**
+             * Use Ai
+             * @default true
+             */
+            use_ai: boolean;
         };
         /** ValidationError */
         ValidationError: {
@@ -268,7 +263,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ScanRequest"];
+                "application/json": components["schemas"]["EmulateRequest"];
             };
         };
         responses: {
@@ -321,26 +316,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    _no_build__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "text/html": string;
                 };
             };
         };
