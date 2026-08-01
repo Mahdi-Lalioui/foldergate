@@ -1,0 +1,52 @@
+[project]
+name = "foldergate"
+version = "0.1.0"
+description = "A folder shouldn't be able to attack you. FolderGate is the gate it has to pass through first."
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic>=2.9",
+    "openai>=1.54",
+]
+
+[project.scripts]
+foldergate = "foldergate.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.7",
+]
+# Modal is only needed by workstream A (#5, trigger emulation) and the deploy job.
+# #5 is the first thing we cut, so it must never be able to block the four people
+# who don't touch it: `uv sync` works without a Rust toolchain, and A opts in with
+# `uv sync --group modal`.
+modal = [
+    "modal>=1.0",
+    # cbor2 6.x is Rust-based and ships no macOS x86_64 wheel, so it builds from source
+    # and needs rustc >= 1.85 (edition2024) -- which fails on an Intel Mac with 1.84.
+    # The 5.x line is pure C and builds anywhere. Drop this pin once 6.x ships wheels.
+    "cbor2<6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["foldergate"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+# Fixtures deliberately contain hostile/malformed content. Never lint them.
+extend-exclude = ["fixtures", "web"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

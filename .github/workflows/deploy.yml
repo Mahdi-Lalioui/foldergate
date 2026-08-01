@@ -1,0 +1,43 @@
+name: Deploy
+
+# The CD half. This exists so the submission has a public URL -- the live demo runs
+# on localhost, because we do not want a cold start between clicking Defang and the
+# reveal. Never allowed to fail the build.
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: true
+
+jobs:
+  modal:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build UI
+        run: |
+          if [ -f web/package.json ]; then
+            cd web && npm ci && npm run build
+          else
+            echo "No UI yet; deploying API only."
+          fi
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - name: Deploy to Modal
+        env:
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+        run: |
+          if [ -z "$MODAL_TOKEN_ID" ]; then
+            echo "MODAL_TOKEN_ID not set -- skipping deploy. Add the repo secrets to enable it."
+            exit 0
+          fi
+          uv run modal deploy foldergate/modal_app.py

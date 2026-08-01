@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A superseded run is wasted minutes we do not have today.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      # tests/test_scanner.py is the 12:15 checkpoint, automated: all four vectors
+      # detected on demo-trapped, zero findings on demo-clean.
+      - run: uv run pytest
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # Skip cleanly until the Vite scaffold lands, so CI is never red for a
+      # reason nobody can act on.
+      - id: check
+        run: test -f web/package.json && echo "exists=true" >> "$GITHUB_OUTPUT" || echo "exists=false" >> "$GITHUB_OUTPUT"
+      - if: steps.check.outputs.exists == 'true'
+        working-directory: web
+        run: npm ci
+      - if: steps.check.outputs.exists == 'true'
+        working-directory: web
+        run: npx tsc --noEmit
+      - if: steps.check.outputs.exists == 'true'
+        working-directory: web
+        run: npm run build

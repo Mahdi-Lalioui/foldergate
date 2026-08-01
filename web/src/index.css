@@ -1,0 +1,13 @@
+@import 'tailwindcss';
+
+/* Security-console dark. The demo room is dark and a projector washes out mid-tones,
+   so contrast is deliberately high. */
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background: #0b0f14;
+  color: #e6edf3;
+  -webkit-font-smoothing: antialiased;
+}

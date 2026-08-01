@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+node_modules/
+web/dist/
+
+.env
+.DS_Store
+
+# Payload artifacts dropped by the demo fixtures. Never commit these -- fixtures/reset.sh
+# removes them, and a committed PWNED.txt makes the "nothing fires" moment a lie.
+PWNED.txt
