@@ -55,7 +55,7 @@ export default function RepoInput({ value, busy, onChange, onSubmit }: Props) {
           e.preventDefault()
           submit(value)
         }}
-        className="flex items-center gap-2 rounded-2xl border border-line bg-surface/80 p-2 backdrop-blur focus-within:border-accent/60"
+        className="flex items-center gap-2 rounded-2xl border border-rule bg-card/80 p-2 backdrop-blur focus-within:border-warn/60"
       >
         <input
           ref={ref}
@@ -66,12 +66,12 @@ export default function RepoInput({ value, busy, onChange, onSubmit }: Props) {
           autoComplete="off"
           aria-label="Repository URL or path to scan"
           placeholder="https://github.com/org/repo"
-          className="min-w-0 flex-1 bg-transparent px-4 py-3 font-mono text-base text-fg outline-none placeholder:text-fg-muted/50 disabled:opacity-50"
+          className="min-w-0 flex-1 bg-transparent px-4 py-3 font-mono text-base text-ink outline-none placeholder:text-sage/50 disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={busy || !value.trim()}
-          className="flex shrink-0 items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-bg transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex shrink-0 items-center gap-2 rounded-xl bg-warn px-5 py-3 text-sm font-semibold text-ink transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {busy ? (
             <Loader2 size={16} className="animate-spin" />
@@ -83,7 +83,7 @@ export default function RepoInput({ value, busy, onChange, onSubmit }: Props) {
       </form>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className="text-xs text-fg-muted">or try</span>
+        <span className="text-xs text-sage">or try</span>
         {FIXTURES.map(({ path, label, hint, Icon, tone }) => (
           <button
             key={path}
@@ -93,11 +93,11 @@ export default function RepoInput({ value, busy, onChange, onSubmit }: Props) {
               onChange(path)
               submit(path)
             }}
-            className="group flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-xs transition hover:border-accent/50 hover:bg-surface-2 disabled:opacity-40"
+            className="group flex items-center gap-2 rounded-full border border-rule bg-card px-3 py-1.5 text-xs transition hover:border-warn/50 hover:bg-well disabled:opacity-40"
           >
             <Icon size={13} className={tone} />
-            <span className="font-mono text-fg">{label}</span>
-            <span className="text-fg-muted">{hint}</span>
+            <span className="font-mono text-ink">{label}</span>
+            <span className="text-sage">{hint}</span>
           </button>
         ))}
       </div>

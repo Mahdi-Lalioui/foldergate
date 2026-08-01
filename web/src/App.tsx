@@ -149,16 +149,28 @@ export default function App() {
   return (
     <div className="hero-glow grain relative isolate min-h-dvh">
       <main className="mx-auto max-w-4xl px-5 py-12 sm:px-8 sm:py-16">
+        {/* The masthead. A rule under the wordmark and a right-aligned strapline is the
+            oldest editorial device there is, and it is what stops a single-page tool from
+            reading as a template. */}
         <header>
-          <div className="flex items-center gap-2.5">
-            <ShieldCheck size={22} className="text-accent" />
-            <span className="text-lg font-semibold tracking-tight">FolderGate</span>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-b border-rule pb-4">
+            <div className="flex items-baseline gap-2.5">
+              <ShieldCheck
+                size={20}
+                strokeWidth={1.6}
+                className="translate-y-0.5 self-center text-sage"
+                aria-hidden
+              />
+              <span className="font-display text-2xl tracking-tight text-ink">FolderGate</span>
+            </div>
+            <span className="label-caps">Pre-open repo security</span>
           </div>
-          <h1 className="display mt-8 max-w-2xl text-4xl leading-[1.1] font-bold sm:text-5xl">
+
+          <h1 className="mt-12 max-w-3xl font-display text-[clamp(2.4rem,6.5vw,4.5rem)] leading-[1.04] text-ink">
             A folder shouldn&apos;t be able to attack you.
           </h1>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-fg-muted sm:text-lg">
-            Paste a repo <em className="text-fg not-italic">before</em> you open it. FolderGate
+          <p className="mt-6 max-w-xl text-base leading-relaxed text-sage sm:text-lg">
+            Paste a repo <em className="text-ink not-italic">before</em> you open it. FolderGate
             scans it, emulates the trigger paths your IDE would execute on folder open, and hands
             back a defanged copy.
           </p>
@@ -176,12 +188,12 @@ export default function App() {
         {error && (
           <div
             role="alert"
-            className="mt-6 flex items-start gap-3 rounded-xl border border-accent/40 bg-accent/[0.07] px-5 py-4"
+            className="mt-6 flex items-start gap-3 rounded-xl border border-warn/40 bg-warn/[0.07] px-5 py-4"
           >
-            <TriangleAlert size={16} className="mt-0.5 shrink-0 text-accent" />
+            <TriangleAlert size={16} className="mt-0.5 shrink-0 text-warn" />
             <div className="min-w-0 text-sm">
-              <p className="font-medium text-fg">{error}</p>
-              <p className="mt-1 font-mono text-xs text-fg-muted">
+              <p className="font-medium text-ink">{error}</p>
+              <p className="mt-1 font-mono text-xs text-sage">
                 uv run uvicorn foldergate.api:app
               </p>
             </div>
@@ -212,6 +224,7 @@ export default function App() {
               verdict={report.verdict}
               findingCount={findings.length}
               defanging={status === 'defanging'}
+              repo={report.repo_url}
             />
 
             {showDefang && (
@@ -219,7 +232,7 @@ export default function App() {
                 <button
                   onClick={handleDefang}
                   disabled={busy}
-                  className="flex items-center gap-2 rounded-xl bg-accent px-6 py-3.5 text-base font-semibold text-bg transition hover:brightness-110 disabled:opacity-50"
+                  className="flex items-center gap-2 rounded-xl bg-warn px-6 py-3.5 text-base font-semibold text-ink transition hover:brightness-110 disabled:opacity-50"
                 >
                   {status === 'defanging' ? (
                     <Loader2 size={17} className="animate-spin" />
@@ -228,9 +241,9 @@ export default function App() {
                   )}
                   Defang this repo
                 </button>
-                <span className="text-xs text-fg-muted">
+                <span className="text-xs text-sage">
                   or press{' '}
-                  <kbd className="rounded border border-line bg-surface-2 px-1.5 py-0.5 font-mono text-fg">
+                  <kbd className="rounded border border-rule bg-well px-1.5 py-0.5 font-mono text-ink">
                     D
                   </kbd>
                 </span>
@@ -253,7 +266,7 @@ export default function App() {
 
             <button
               onClick={() => dispatch({ type: 'RESET' })}
-              className="flex items-center gap-2 text-sm text-fg-muted transition hover:text-fg"
+              className="flex items-center gap-2 text-sm text-sage transition hover:text-ink"
             >
               <RotateCcw size={14} /> Scan another repo
             </button>

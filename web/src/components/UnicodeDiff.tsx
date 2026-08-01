@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Eye, EyeOff, RotateCcw, TriangleAlert } from 'lucide-react'
 import type { Finding } from '../api'
-import { analyze } from '../lib/invisible'
+import { payloadFindings } from '../api'
+import { analyzePair } from '../lib/invisible'
 
 interface Props {
   findings: Finding[]
@@ -58,22 +59,50 @@ function useCountUp(target: number, ms = 750) {
  * take our word that something is hidden there.
  */
 export default function UnicodeDiff({ findings }: Props) {
-  // Three of the four stub findings carry 0/0. "0 visible · 0 the model reads" is a
-  // broken stat, not an empty state, so they are filtered out rather than rendered.
-  const withPayload = findings.filter((f) => f.model_chars > 0 || f.visible_chars > 0)
+  // A finding with no character counts has no story to tell here ("0 visible · 0 the
+  // model reads" is a broken stat, not an empty state), and the same file can be
+  // reported more than once. One panel per file, richest instance wins.
+  const withPayload = payloadFindings(findings)
   if (withPayload.length === 0) return null
 
+  const [lead, ...rest] = withPayload
+
   return (
-    <>
-      {withPayload.map((f) => (
-        <Panel key={`${f.vector}-${f.file}`} finding={f} />
-      ))}
-    </>
+    <div className="space-y-4">
+      <Panel finding={lead} />
+
+      {/* The same payload planted in several files is not repetition to be hidden -- it
+          is the cross-tool claim, proven. Cursor's rules file, its case-collision twin
+          and Claude's file all carry it, so one gate has to cover all of them. Shown as
+          compact corroboration rather than three identical full-size panels. */}
+      {rest.length > 0 && (
+        <section className="rounded-xl border border-rule bg-card p-6 sm:p-8">
+          <h3 className="label-caps">Same payload, {rest.length + 1} files</h3>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-sage">
+            One instruction, planted across every rules file the tools read. Removing it from
+            one leaves the others live — which is the argument for a gate rather than a linter.
+          </p>
+          <ul className="mt-5 divide-y divide-rule border-t border-rule">
+            {[lead, ...rest].map((f) => (
+              <li key={f.file} className="flex flex-wrap items-baseline gap-x-4 gap-y-1 py-3">
+                <code className="font-mono text-sm break-all text-ink">{f.file}</code>
+                <span className="tabular ml-auto font-mono text-xs text-sage">
+                  {f.visible_chars} visible
+                </span>
+                <span className="tabular font-mono text-xs text-danger">
+                  {f.model_chars} read
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
   )
 }
 
 function Panel({ finding: f }: { finding: Finding }) {
-  const a = analyze(f.decoded || '')
+  const a = analyzePair(f.decoded || '', f.evidence || '')
   const visible = useCountUp(f.visible_chars)
   const model = useCountUp(f.model_chars)
   const ratio = f.model_chars > 0 ? Math.min(1, f.visible_chars / f.model_chars) : 1
@@ -95,75 +124,69 @@ function Panel({ finding: f }: { finding: Finding }) {
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-line bg-surface">
-      <header className="flex items-center gap-2 border-b border-line px-6 py-3 sm:px-8">
-        <TriangleAlert size={14} className="text-accent" />
-        <span className="text-xs font-semibold tracking-[0.18em] text-fg-muted uppercase">
-          Hidden instruction
-        </span>
-        <code className="ml-auto truncate font-mono text-xs text-fg-muted">{f.file}</code>
+    <section className="overflow-hidden rounded-xl border border-rule bg-card">
+      <header className="flex items-center gap-2 border-b border-rule px-6 py-3.5 sm:px-8">
+        <TriangleAlert size={14} className="text-danger" />
+        <span className="label-caps">Hidden instruction</span>
+        <code className="ml-auto truncate font-mono text-xs text-sage">{f.file}</code>
       </header>
 
       {/* The stat. Largest thing on the page -- readable from the back of the room. */}
-      <div className="px-6 py-7 sm:px-8">
-        <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
+      <div className="px-6 py-8 sm:px-8">
+        <div className="flex flex-wrap items-end gap-x-12 gap-y-5">
           <div>
-            <div className="tabular display text-5xl leading-none font-bold text-fg sm:text-6xl">
+            <div className="tabular font-display text-6xl leading-none text-ink sm:text-7xl">
               {visible}
             </div>
-            <div className="mt-2 flex items-center gap-1.5 text-xs tracking-wide text-fg-muted uppercase">
+            <div className="mt-3 flex items-center gap-1.5 label-caps">
               <Eye size={12} /> characters visible
             </div>
           </div>
 
-          <div className="pb-2 text-2xl text-fg-muted">·</div>
+          <div className="pb-3 font-display text-3xl text-taupe">/</div>
 
           <div>
-            <div className="tabular display text-5xl leading-none font-bold text-danger sm:text-6xl">
+            <div className="tabular font-display text-6xl leading-none text-danger sm:text-7xl">
               {model}
             </div>
-            <div className="mt-2 flex items-center gap-1.5 text-xs tracking-wide text-danger/80 uppercase">
+            <div className="mt-3 flex items-center gap-1.5 label-caps text-danger!">
               <EyeOff size={12} /> characters the model reads
             </div>
           </div>
         </div>
 
-        {/* Ratio bar: the amber sliver is everything a human can perceive. */}
-        <div className="mt-6 flex h-1.5 overflow-hidden rounded-full bg-danger/25">
+        {/* Ratio bar: the sliver is everything a human can perceive. */}
+        <div className="mt-7 flex h-1.5 overflow-hidden rounded-full bg-danger/25">
           <div
-            className="rounded-full bg-accent transition-[width] duration-700 ease-out"
+            className="rounded-full bg-ink transition-[width] duration-700 ease-out"
             style={{ width: `${ratio * 100}%` }}
           />
         </div>
       </div>
 
       {/* The reveal. One surface, two readings. */}
-      <div className="border-t border-line">
-        <div className="flex items-center gap-3 border-b border-line px-6 py-3 sm:px-8">
+      <div className="border-t border-rule">
+        <div className="flex items-center gap-3 border-b border-rule bg-paper/60 px-6 py-3 sm:px-8">
           <div className="flex items-center gap-2">
             {showModel ? (
               <EyeOff size={13} className="text-danger" />
             ) : (
-              <Eye size={13} className="text-fg-muted" />
+              <Eye size={13} className="text-sage" />
             )}
-            <span
-              className={`text-xs font-semibold tracking-[0.14em] uppercase transition-colors ${
-                showModel ? 'text-danger' : 'text-fg-muted'
-              }`}
-            >
+            <span className={`label-caps transition-colors ${showModel ? 'text-danger!' : ''}`}>
               {showModel ? 'What the model reads' : 'What you see'}
             </span>
           </div>
           <button
             type="button"
             onClick={replay}
-            className="ml-auto flex items-center gap-1.5 rounded-lg border border-line px-2.5 py-1 text-[11px] text-fg-muted transition hover:border-accent/50 hover:text-fg"
+            className="ml-auto flex items-center gap-1.5 rounded-lg border border-rule px-2.5 py-1 text-[11px] text-sage transition hover:border-ink hover:text-ink"
           >
             <RotateCcw size={11} /> Replay
           </button>
         </div>
 
-        <div className="bg-surface-2 px-6 py-6 sm:px-8">
+        <div className="bg-well px-6 py-6 sm:px-8">
           <pre
             key={`${pass}-${showModel}`}
             className="anim-materialize font-mono text-sm leading-relaxed whitespace-pre-wrap"
@@ -172,18 +195,18 @@ function Panel({ finding: f }: { finding: Finding }) {
               a.segments.map((s, i) => (
                 <span key={i} style={{ animationDelay: `${i * 55}ms` }}>
                   {s.kind === 'visible' ? (
-                    <span className="text-fg">{s.text}</span>
+                    <span className="text-ink">{s.text}</span>
                   ) : s.kind === 'hidden' ? (
-                    <span className="ghost" title={`${s.count} × ${s.codes?.join(' ')}`}>
-                      {s.count}&nbsp;hidden
+                    <span className="zw-run" title={s.codes?.join(' ')}>
+                      {s.count}&nbsp;×&nbsp;{s.codes?.[0] ?? 'HIDDEN'}
                     </span>
                   ) : (
-                    <span className="ghost">{s.text}</span>
+                    <span className="zw-run">{s.text}</span>
                   )}
                 </span>
               ))
             ) : (
-              <span className="text-fg-muted">{f.evidence || '—'}</span>
+              <span className="text-sage">{f.evidence || '—'}</span>
             )}
           </pre>
         </div>
@@ -193,16 +216,16 @@ function Panel({ finding: f }: { finding: Finding }) {
           ASCII offset, so the smuggled text can be reconstructed exactly, not just flagged. */}
       {a.smuggled && (
         <div
-          className={`border-t border-line bg-danger/[0.06] px-6 py-5 transition-opacity duration-500 sm:px-8 ${
+          className={`border-t border-danger/25 bg-danger-wash px-6 py-6 transition-opacity duration-500 sm:px-8 ${
             showModel ? 'opacity-100' : 'opacity-0'
           }`}
         >
-          <p className="text-xs font-semibold tracking-[0.18em] text-danger uppercase">
+          <p className="label-caps text-danger!">
             {a.real
               ? `Recovered from ${a.hiddenCount} invisible characters`
               : 'Hidden from the reader'}
           </p>
-          <p className="mt-3 font-mono text-base leading-relaxed text-fg sm:text-lg">
+          <p className="mt-3 font-mono text-base leading-relaxed text-ink sm:text-lg">
             “{a.smuggled}”
           </p>
         </div>

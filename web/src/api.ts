@@ -58,8 +58,57 @@ export const VECTOR_LABEL: Record<Vector, string> = {
  */
 const VECTOR_ORDER: Vector[] = ['rules_file', 'mcp_json', 'tasks_json', 'planted_binary']
 
-export function inChainOrder(findings: Finding[]): Finding[] {
-  return [...findings].sort(
+export interface ChainStep {
+  file: string
+  vector: Vector
+  /** Every distinct blast radius reported for this file, in scanner order. */
+  radii: string[]
+  explanation: string
+}
+
+/**
+ * One step per FILE, not one per finding.
+ *
+ * The real scanner emits a finding per rule that fires, so a single `.cursor/mcp.json`
+ * can produce three -- unallowlisted command, path inside the repo, and a `curl | sh`
+ * shape. All true, all worth showing, but rendering them as three chain links destroys
+ * the sentence the whole product rests on: four files, individually mild, together
+ * code execution on open. So findings are grouped by file and their blast radii listed
+ * under one node. Nothing is dropped; it is just told as one step.
+ */
+export function chainSteps(findings: Finding[]): ChainStep[] {
+  const byFile = new Map<string, ChainStep>()
+  for (const f of findings) {
+    const step = byFile.get(f.file)
+    if (!step) {
+      byFile.set(f.file, {
+        file: f.file,
+        vector: f.vector,
+        radii: f.blast_radius ? [f.blast_radius] : [],
+        explanation: f.explanation ?? '',
+      })
+      continue
+    }
+    if (f.blast_radius && !step.radii.includes(f.blast_radius)) step.radii.push(f.blast_radius)
+    if (!step.explanation && f.explanation) step.explanation = f.explanation
+    // Keep the earliest vector in infection order as the file's identity.
+    if (VECTOR_ORDER.indexOf(f.vector) < VECTOR_ORDER.indexOf(step.vector)) step.vector = f.vector
+  }
+  return [...byFile.values()].sort(
     (a, b) => VECTOR_ORDER.indexOf(a.vector) - VECTOR_ORDER.indexOf(b.vector),
   )
+}
+
+/**
+ * One reveal panel per file. The same rules file can be reported more than once; the
+ * richest instance (most characters the model reads) is the one worth showing.
+ */
+export function payloadFindings(findings: Finding[]): Finding[] {
+  const best = new Map<string, Finding>()
+  for (const f of findings) {
+    if (f.model_chars <= 0 && f.visible_chars <= 0) continue
+    const cur = best.get(f.file)
+    if (!cur || f.model_chars > cur.model_chars) best.set(f.file, f)
+  }
+  return [...best.values()]
 }

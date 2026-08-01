@@ -14,7 +14,7 @@ export default function DefangSummary({ defanged }: { defanged: Defanged }) {
   return (
     <section
       style={{ animationDelay: '120ms' }}
-      className="anim-rise rounded-2xl border border-safe/30 bg-surface p-6 sm:p-8"
+      className="anim-rise rounded-2xl border border-safe/30 bg-card p-6 sm:p-8"
     >
       <div className="flex items-center gap-2">
         <Check size={15} className="text-safe" />
@@ -24,9 +24,9 @@ export default function DefangSummary({ defanged }: { defanged: Defanged }) {
       </div>
 
       {defanged.output_path && (
-        <div className="mt-4 rounded-xl border border-line bg-surface-2 px-5 py-4">
-          <p className="text-[11px] tracking-wider text-fg-muted uppercase">Output path</p>
-          <code className="mt-1.5 block font-mono text-base break-all text-fg sm:text-xl">
+        <div className="mt-4 rounded-xl border border-rule bg-well px-5 py-4">
+          <p className="text-[11px] tracking-wider text-sage uppercase">Output path</p>
+          <code className="mt-1.5 block font-mono text-base break-all text-ink sm:text-xl">
             {defanged.output_path}
           </code>
         </div>
@@ -36,16 +36,16 @@ export default function DefangSummary({ defanged }: { defanged: Defanged }) {
         <div>
           <div className="flex items-center gap-2">
             <Trash2 size={13} className="text-danger" />
-            <span className="text-[11px] tracking-wider text-fg-muted uppercase">
+            <span className="text-[11px] tracking-wider text-sage uppercase">
               Removed ({removed.length})
             </span>
           </div>
           <ul className="mt-2 space-y-1">
-            {removed.length === 0 && <li className="text-sm text-fg-muted/60">none</li>}
+            {removed.length === 0 && <li className="text-sm text-sage/60">none</li>}
             {removed.map((f) => (
               <li
                 key={f}
-                className="font-mono text-sm break-all text-fg-muted line-through decoration-danger/70"
+                className="font-mono text-sm break-all text-sage line-through decoration-danger/70"
               >
                 {f}
               </li>
@@ -55,15 +55,15 @@ export default function DefangSummary({ defanged }: { defanged: Defanged }) {
 
         <div>
           <div className="flex items-center gap-2">
-            <FilePen size={13} className="text-accent" />
-            <span className="text-[11px] tracking-wider text-fg-muted uppercase">
+            <FilePen size={13} className="text-warn" />
+            <span className="text-[11px] tracking-wider text-sage uppercase">
               Neutralised ({modified.length})
             </span>
           </div>
           <ul className="mt-2 space-y-1">
-            {modified.length === 0 && <li className="text-sm text-fg-muted/60">none</li>}
+            {modified.length === 0 && <li className="text-sm text-sage/60">none</li>}
             {modified.map((f) => (
-              <li key={f} className="font-mono text-sm break-all text-fg">
+              <li key={f} className="font-mono text-sm break-all text-ink">
                 {f}
               </li>
             ))}
@@ -71,7 +71,7 @@ export default function DefangSummary({ defanged }: { defanged: Defanged }) {
         </div>
       </div>
 
-      <p className="mt-6 text-xs text-fg-muted">
+      <p className="mt-6 text-xs text-sage">
         Deterministic — no model was consulted about what to remove.
       </p>
     </section>

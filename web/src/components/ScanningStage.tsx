@@ -60,21 +60,21 @@ export default function ScanningStage() {
     <section
       aria-live="polite"
       aria-label="Scanning repository"
-      className="relative overflow-hidden rounded-2xl border border-accent/25 bg-surface"
+      className="relative overflow-hidden rounded-2xl border border-warn/25 bg-card"
     >
       {/* The sweep. Purely decorative, sits behind the text. */}
       <div
         aria-hidden
-        className="anim-sweep pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-transparent via-accent/[0.07] to-transparent"
+        className="anim-sweep pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-transparent via-warn/10 to-transparent"
       />
 
       <div className="relative px-6 py-6 sm:px-8">
         <div className="flex items-center gap-3">
-          <Loader2 size={16} className="animate-spin text-accent" />
-          <span className="text-xs font-semibold tracking-[0.18em] text-accent uppercase">
+          <Loader2 size={16} className="animate-spin text-warn" />
+          <span className="text-xs font-semibold tracking-[0.18em] text-warn uppercase">
             Scanning
           </span>
-          <span className="tabular ml-auto font-mono text-xs text-fg-muted">
+          <span className="tabular ml-auto font-mono text-xs text-sage">
             {phase + 1} / {PHASES.length}
           </span>
         </div>
@@ -87,16 +87,16 @@ export default function ScanningStage() {
               <li
                 key={p.label}
                 className={`flex items-start gap-3 transition-colors duration-300 ${
-                  current ? 'text-fg' : done ? 'text-fg-muted' : 'text-fg-muted/35'
+                  current ? 'text-ink' : done ? 'text-sage' : 'text-sage/40'
                 }`}
               >
                 <span className="mt-1 flex size-4 shrink-0 items-center justify-center">
                   {done ? (
                     <Check size={13} className="text-safe/70" />
                   ) : current ? (
-                    <span className="anim-pulse size-1.5 rounded-full bg-accent" />
+                    <span className="anim-pulse size-1.5 rounded-full bg-warn" />
                   ) : (
-                    <span className="size-1.5 rounded-full bg-fg-muted/30" />
+                    <span className="size-1.5 rounded-full bg-taupe" />
                   )}
                 </span>
                 <span className="min-w-0 text-sm">{p.label}</span>
@@ -106,12 +106,12 @@ export default function ScanningStage() {
         </ol>
 
         {/* The paths for the active phase, flickering past. */}
-        <div className="anim-materialize mt-5 flex flex-wrap gap-1.5 border-t border-line pt-4">
+        <div className="anim-materialize mt-5 flex flex-wrap gap-1.5 border-t border-rule pt-4">
           {active.paths.map((path, i) => (
             <code
               key={`${phase}-${path}`}
               style={{ animationDelay: `${i * 34}ms` }}
-              className="rounded border border-line bg-surface-2 px-2 py-1 font-mono text-[11px] text-fg-muted"
+              className="rounded border border-rule bg-well px-2 py-1 font-mono text-[11px] text-sage"
             >
               {path}
             </code>

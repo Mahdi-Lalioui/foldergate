@@ -28,19 +28,19 @@ const POINTS = [
 
 export default function SafetyFooter() {
   return (
-    <footer className="mt-4 border-t border-line pt-8">
+    <footer className="mt-4 border-t border-rule pt-8">
       <div className="grid gap-6 sm:grid-cols-3">
         {POINTS.map(({ Icon, title, body }) => (
           <div key={title}>
             <div className="flex items-center gap-2">
-              <Icon size={14} className="text-accent" />
-              <h4 className="text-xs font-semibold tracking-wider text-fg uppercase">{title}</h4>
+              <Icon size={14} className="text-warn" />
+              <h4 className="text-xs font-semibold tracking-wider text-ink uppercase">{title}</h4>
             </div>
-            <p className="mt-2 text-xs leading-relaxed text-fg-muted">{body}</p>
+            <p className="mt-2 text-xs leading-relaxed text-sage">{body}</p>
           </div>
         ))}
       </div>
-      <p className="mt-8 text-xs text-fg-muted/60">
+      <p className="mt-8 text-xs text-sage/60">
         FolderGate · a folder shouldn&apos;t be able to attack you.
       </p>
     </footer>

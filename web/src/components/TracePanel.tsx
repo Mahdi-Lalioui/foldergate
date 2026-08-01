@@ -17,17 +17,17 @@ interface Props {
 export default function TracePanel({ emulation }: Props) {
   if (!emulation?.ran) {
     return (
-      <section className="rounded-2xl border border-dashed border-line bg-surface/50 px-6 py-6 sm:px-8">
+      <section className="rounded-2xl border border-dashed border-rule bg-card/50 px-6 py-6 sm:px-8">
         <div className="flex items-center gap-2">
-          <CircleSlash size={15} className="text-fg-muted" />
-          <h3 className="text-xs font-semibold tracking-[0.18em] text-fg-muted uppercase">
+          <CircleSlash size={15} className="text-sage" />
+          <h3 className="text-xs font-semibold tracking-[0.18em] text-sage uppercase">
             Trigger emulation
           </h3>
         </div>
-        <p className="mt-3 text-sm text-fg-muted">
+        <p className="mt-3 text-sm text-sage">
           Unavailable — {emulation?.reason || 'not run for this scan.'}
         </p>
-        <p className="mt-1 text-xs text-fg-muted/70">
+        <p className="mt-1 text-xs text-sage/70">
           Static analysis above stands on its own; the trace is corroboration.
         </p>
       </section>
@@ -42,11 +42,11 @@ export default function TracePanel({ emulation }: Props) {
   ] as const
 
   return (
-    <section className="rounded-2xl border border-line bg-surface p-6 sm:p-8">
-      <h3 className="text-xs font-semibold tracking-[0.18em] text-fg-muted uppercase">
+    <section className="rounded-2xl border border-rule bg-card p-6 sm:p-8">
+      <h3 className="text-xs font-semibold tracking-[0.18em] text-sage uppercase">
         Trigger emulation
       </h3>
-      <p className="mt-2 text-sm text-fg-muted">
+      <p className="mt-2 text-sm text-sage">
         The IDE&apos;s own trigger paths, extracted and executed under tracing. No network egress.
       </p>
 
@@ -56,13 +56,13 @@ export default function TracePanel({ emulation }: Props) {
           const blocked = 'blocked' in flags && flags.blocked
           const list = items ?? []
           return (
-            <div key={label} className="rounded-xl border border-line bg-surface-2 p-4">
+            <div key={label} className="rounded-xl border border-rule bg-well p-4">
               <div className="flex items-center gap-2">
-                <Icon size={13} className={loud ? 'text-danger' : 'text-fg-muted'} />
-                <span className="text-[11px] tracking-wider text-fg-muted uppercase">{label}</span>
+                <Icon size={13} className={loud ? 'text-danger' : 'text-sage'} />
+                <span className="text-[11px] tracking-wider text-sage uppercase">{label}</span>
               </div>
               {list.length === 0 ? (
-                <p className="mt-2 text-sm text-fg-muted/60">none observed</p>
+                <p className="mt-2 text-sm text-sage/60">none observed</p>
               ) : (
                 <ul className="mt-2.5 space-y-1.5">
                   {list.map((item, i) => (
@@ -72,8 +72,8 @@ export default function TracePanel({ emulation }: Props) {
                         loud
                           ? 'text-base font-medium text-danger sm:text-lg'
                           : blocked
-                            ? 'text-sm text-fg-muted line-through decoration-danger/60'
-                            : 'text-sm text-fg'
+                            ? 'text-sm text-sage line-through decoration-danger/60'
+                            : 'text-sm text-ink'
                       }`}
                     >
                       {item}

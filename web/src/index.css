@@ -1,80 +1,144 @@
 @import 'tailwindcss';
 
-/* Self-hosted, bundled by Vite. Never a Google Fonts CDN import: the issue forbids
-   runtime CDN dependencies, and venue wifi must not be able to change our typography. */
+/* Self-hosted, bundled by Vite. Deliberately NOT a Google Fonts CDN: the demo has to
+   survive dead venue wifi, and the only thing allowed to need the network is the one
+   OpenAI call. */
+@import '@fontsource/dm-serif-display/400.css';
 @import '@fontsource/inter/400.css';
 @import '@fontsource/inter/500.css';
 @import '@fontsource/inter/600.css';
-@import '@fontsource/inter/700.css';
 @import '@fontsource/jetbrains-mono/400.css';
 @import '@fontsource/jetbrains-mono/500.css';
 @import '@fontsource/jetbrains-mono/700.css';
 
-/* Security-console dark. The demo room is dark and a projector washes out mid-tones,
-   so contrast is deliberately high.
+/*
+  FolderGate design tokens — light.
 
-   The palette has one rule that governs everything: RED AND GREEN BELONG TO THE VERDICT.
-   Nothing else in this UI may use them -- no red buttons, no green success states. The
-   whole product is one binary judgement, so those two hues have to stay unambiguous.
-   Every piece of chrome (CTAs, focus rings, progress, the DEFANG action) is amber, which
-   belongs to neither pole, reads as "caution / gate", and survives projector washout
-   better than any other accent. */
+  Two families, kept strictly separate:
+
+  1. NEUTRALS carry the brand -- restrained, editorial, high-end-consultancy. They do
+     the layout, the chrome, the typography.
+  2. SEMANTIC colours carry meaning, and nothing else. danger/warn/safe/info are never
+     used decoratively. If something is red on screen it is because it is dangerous.
+
+  That separation is the whole point. The demo turns on one moment -- QUARANTINED
+  flipping to CLEAN -- and it only lands if red and green have been earned by being
+  scarce everywhere else.
+
+  Light rather than dark, and that is a positioning decision. Every tool in this space is
+  dark-with-neon, which is precisely why it reads as generic. Paper reads as an instrument
+  of record -- an audit finding, something with a legal department behind it -- and that
+  is the register this product wants.
+
+  MEASURED CONTRAST against paper #F2EEE6 (see the ratios in each comment). Three rules
+  fall out of the numbers and are not negotiable:
+    - taupe is 1.51:1. Hairlines and rules ONLY. It is never text.
+    - warn is 2.79:1, below even the 3:1 large-text bar. It is a FILL with ink on top,
+      or a border. There is no gold text anywhere in this UI.
+    - danger 4.41:1 and safe 4.25:1 clear 3:1, which is the bar for the verdict word at
+      56px+. Their small-text uses sit on white cards instead (4.98 / 4.80).
+*/
 @theme {
-  --color-bg: #0b0f14;
-  --color-surface: #111820;
-  --color-surface-2: #161e28;
-  --color-line: #1f2a37;
-  --color-fg: #e6edf3;
-  --color-fg-muted: #8b99a8;
+  /* Brand neutrals, straight off the brand board */
+  --color-ink: #1b1f26; /* 14.28:1 on paper — all primary text */
+  --color-sage: #596659; /* 5.23:1 on paper — secondary text, passes AA */
+  --color-taupe: #c9c4b5; /* 1.51:1 — RULES ONLY, never text */
+  --color-cream: #f2eee6;
+  --color-mist: #e4e6e9;
 
-  --color-accent: #f59e0b;
-  --color-accent-dim: #7c4a02;
+  /* Surface roles, mapped light */
+  --color-paper: #f2eee6; /* the page */
+  --color-card: #fdfcfa; /* raised surfaces */
+  --color-well: #e8e5db; /* insets, code wells, evidence */
+  --color-rule: #d6d0c0; /* hairlines — taupe pulled down until it survives a projector */
 
-  /* Reserved. Verdict only. */
-  --color-danger: #ef4444;
-  --color-safe: #22c55e;
+  /* Semantic — meaning only, never decoration */
+  --color-danger: #c2413a;
+  --color-danger-wash: #f7ece9;
+  --color-warn: #b8863b;
+  --color-warn-wash: #f7f0e2;
+  --color-safe: #4f7a5b;
+  --color-safe-wash: #eaf1eb;
+  --color-info: #5a6b7d;
 
+  /* Type. Serif for voice, sans for interface, mono for evidence.
+     A security tool shows paths, config and raw bytes constantly -- the mono face is
+     load-bearing, not ornamental. */
+  --font-display: 'DM Serif Display', ui-serif, Georgia, serif;
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+
+  /* Projector-safe scale: the back of the room reads the two largest sizes only. */
+  --text-verdict: 3.5rem;
+  --text-verdict--line-height: 1;
+  --text-verdict--letter-spacing: -0.02em;
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
-  background: var(--color-bg);
-  color: var(--color-fg);
+  background-color: var(--color-paper);
+  color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
+/* Small letter-spaced caps used for every section label. Lifted straight from the
+   brand board -- it is most of what makes the layout read as editorial.
+   Sage rather than taupe: taupe is 1.51:1 and would be unreadable. */
+@utility label-caps {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-sage);
+}
+
 /* Char counts and file sizes must not jitter while animating. */
-.tabular {
+@utility tabular {
   font-variant-numeric: tabular-nums;
 }
 
-/* Display type wants tighter tracking than Inter's default. */
-.display {
-  letter-spacing: -0.02em;
+/* A run of invisible characters, made visible AND counted.
+   The single most important visual in the product: the moment the audience sees what
+   the model sees. It carries its own count because an unlabelled marker means nothing
+   from the back of a room. Solid danger fill with cream on top -- 4.9:1 -- rather than
+   danger text on paper, which would not pass. */
+@utility zw-run {
+  display: inline-block;
+  transform: translateY(-1px);
+  padding: 0.06rem 0.4rem;
+  border-radius: 3px;
+  background-color: var(--color-danger);
+  color: var(--color-cream);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
-/* Atmosphere.
-
-   Two layers, both purely decorative and both behind everything: an amber bloom that
-   gives the hero a light source, and a faint grid that reads as instrumentation. The
-   grid is masked to fade out downward so it never competes with content. */
+/* Atmosphere. On paper this is subtraction rather than addition: a faint warm wash and
+   a ruled grid, both barely there. Light surfaces need less help than dark ones. */
 .hero-glow::before {
   content: '';
   position: absolute;
-  inset: -40% 0 auto 50%;
+  inset: -30% 0 auto 50%;
   translate: -50% 0;
-  width: min(900px, 120vw);
+  width: min(1000px, 130vw);
   aspect-ratio: 1;
   background:
-    radial-gradient(circle, rgb(245 158 11 / 0.11), transparent 60%),
-    radial-gradient(circle at 30% 40%, rgb(56 189 248 / 0.05), transparent 55%);
+    radial-gradient(circle, rgb(184 134 59 / 0.07), transparent 62%),
+    radial-gradient(circle at 32% 42%, rgb(89 102 89 / 0.05), transparent 58%);
   pointer-events: none;
   z-index: -2;
 }
@@ -83,48 +147,34 @@ body {
   content: '';
   position: absolute;
   inset: 0 0 auto 0;
-  height: 620px;
+  height: 640px;
   background-image:
-    linear-gradient(to right, rgb(255 255 255 / 0.028) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(255 255 255 / 0.028) 1px, transparent 1px);
-  background-size: 56px 56px;
-  mask-image: linear-gradient(to bottom, black, transparent 78%);
+    linear-gradient(to right, rgb(27 31 38 / 0.032) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(27 31 38 / 0.032) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(to bottom, black, transparent 76%);
   pointer-events: none;
   z-index: -2;
 }
 
-/* Film grain. An inline SVG turbulence -- self-contained, no asset request, and the one
-   thing that stops large flat dark panels from looking like dead space on a projector. */
+/* Paper grain. An inline SVG turbulence -- self-contained, no asset request. On a light
+   theme this is what separates "paper" from "flat white div". */
 .grain::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: 50;
   pointer-events: none;
-  opacity: 0.028;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* Focus is always amber and always visible. Never remove the ring. */
+/* Focus is always visible. Never remove the ring. Ink rather than warn, because warn is
+   2.79:1 on paper and a focus ring has to be seen. */
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-ink);
   outline-offset: 2px;
-}
-
-/* An invisible character, made visible. Rendered inline inside the decoded text so the
-   smuggled payload is legible as a physical thing occupying space in the file. */
-.ghost {
-  display: inline-block;
-  transform: translateY(-1px);
-  border-radius: 3px;
-  background: rgb(239 68 68 / 0.16);
-  outline: 1px solid rgb(239 68 68 / 0.4);
-  color: #fca5a5;
-  font-family: var(--font-mono);
-  font-size: 0.62em;
-  line-height: 1.5;
-  padding: 0 3px;
-  margin: 0 1px;
 }
 
 /* Entrance motion is CSS, deliberately, and this is a demo-safety decision rather than a
@@ -134,10 +184,7 @@ body {
    frame never arrives -- a backgrounded tab, a throttled renderer, a display switch
    mid-presentation -- the content stays invisible forever. CSS animations advance on the
    document timeline and, if they never run at all, simply leave the element at its normal
-   visible style. Fail-visible, not fail-blank.
-
-   For a verdict banner that a room full of judges is looking at, that difference decides
-   whether the demo survives a bad moment. */
+   visible style. Fail-visible, not fail-blank. */
 @keyframes rise {
   from {
     opacity: 0;
@@ -183,13 +230,10 @@ body {
 
 /* --- The choreography ------------------------------------------------------------ */
 
-/* A shockwave leaving the verdict the instant it lands. Decorative only: a ring that
-   expands and dies. It is what makes the verdict feel like an impact rather than a
-   div that appeared. */
 @keyframes shockwave {
   from {
     transform: scale(0.6);
-    opacity: 0.5;
+    opacity: 0.4;
   }
   to {
     transform: scale(2.4);
@@ -217,19 +261,18 @@ body {
   animation: rail-draw 900ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* A node igniting as the chain reaches it. */
 @keyframes ignite {
   0% {
     transform: scale(0.7);
-    box-shadow: 0 0 0 0 rgb(245 158 11 / 0);
+    box-shadow: 0 0 0 0 rgb(184 134 59 / 0);
   }
   55% {
     transform: scale(1.12);
-    box-shadow: 0 0 0 7px rgb(245 158 11 / 0.16);
+    box-shadow: 0 0 0 7px rgb(184 134 59 / 0.18);
   }
   100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgb(245 158 11 / 0);
+    box-shadow: 0 0 0 0 rgb(184 134 59 / 0);
   }
 }
 
@@ -237,7 +280,6 @@ body {
   animation: ignite 620ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
-/* The scanning sweep travelling down the enumerated surface. */
 @keyframes sweep {
   from {
     transform: translateY(-100%);
@@ -251,7 +293,6 @@ body {
   animation: sweep 1.15s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Smuggled characters resolving out of nothing, one after another. */
 @keyframes materialize {
   from {
     opacity: 0;

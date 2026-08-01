@@ -21,16 +21,16 @@ const SURFACE = [
 export default function ScanSurface() {
   return (
     <section>
-      <h3 className="text-xs font-semibold tracking-[0.18em] text-fg-muted uppercase">
+      <h3 className="text-xs font-semibold tracking-[0.18em] text-sage uppercase">
         What the gate inspects
       </h3>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {SURFACE.map(({ tool, globs }) => (
-          <div key={tool} className="rounded-xl border border-line bg-surface/60 p-4">
-            <p className="text-sm font-medium text-fg">{tool}</p>
+          <div key={tool} className="rounded-xl border border-rule bg-card/60 p-4">
+            <p className="text-sm font-medium text-ink">{tool}</p>
             <ul className="mt-2 space-y-1">
               {globs.map((g) => (
-                <li key={g} className="font-mono text-xs break-all text-fg-muted">
+                <li key={g} className="font-mono text-xs break-all text-sage">
                   {g}
                 </li>
               ))}
@@ -38,11 +38,11 @@ export default function ScanSurface() {
           </div>
         ))}
       </div>
-      <p className="mt-4 text-xs text-fg-muted">
+      <p className="mt-4 text-xs text-sage">
         Plus planted executables that shadow real binaries via PATH order — extensionless{' '}
-        <code className="font-mono text-fg">git</code>,{' '}
-        <code className="font-mono text-fg">node</code>,{' '}
-        <code className="font-mono text-fg">python</code>.
+        <code className="font-mono text-ink">git</code>,{' '}
+        <code className="font-mono text-ink">node</code>,{' '}
+        <code className="font-mono text-ink">python</code>.
       </p>
     </section>
   )

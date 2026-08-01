@@ -4,16 +4,16 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="color-scheme" content="light" />
     <meta
       name="description"
       content="Scan a repo before you open it. FolderGate finds the hostile agent config that would execute on folder open, explains the kill chain, and hands back a defanged copy."
     />
     <title>FolderGate — scan a repo before you open it</title>
   </head>
-  <!-- Painted before first render so a projector never flashes white between load and
-       hydration. The room is dark; a white flash is the first thing judges would see. -->
-  <body style="background: #0b0f14">
+  <!-- Painted before first render so there is no flash of the wrong colour between load
+       and hydration. Must stay in sync with --color-paper in index.css. -->
+  <body style="background: #f2eee6">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
