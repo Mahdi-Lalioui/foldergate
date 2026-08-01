@@ -46,11 +46,13 @@ def test_clean_report_says_so():
     assert "No autorun" in analyse(ScanReport(), use_ai=False).kill_chain
 
 
-def test_missing_api_key_falls_back(monkeypatch):
+def test_missing_api_key_falls_back(monkeypatch, caplog):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     report = analyse(_report(), use_ai=True)
-    assert report.kill_chain
-    assert "deterministic summary" in report.kill_chain
+    assert "zero clicks" in report.kill_chain
+    # The reason is logged, never shown: this text goes on a projector.
+    assert "OPENAI_API_KEY" not in report.kill_chain
+    assert "[" not in report.kill_chain
 
 
 def test_llm_failure_falls_back(monkeypatch):

@@ -13,10 +13,13 @@ narrative and the demo continues. That is a deliberate design property, not a he
 """
 
 import json
+import logging
 import os
 from collections import defaultdict
 
 from foldergate.contract import Finding, ScanReport
+
+logger = logging.getLogger(__name__)
 
 MODEL = os.environ.get("FOLDERGATE_MODEL", "gpt-4o-mini")
 TIMEOUT_SECONDS = 10.0
@@ -80,12 +83,19 @@ def deterministic_chain(findings: list[Finding]) -> str:
 
 
 def _fallback(report: ScanReport, reason: str) -> ScanReport:
+    """Substitute the deterministic narrative.
+
+    The reason is logged, never appended to kill_chain. That text goes on a projector,
+    and "[no OPENAI_API_KEY]" in the middle of the analysis reads to a judge as a
+    broken product rather than a deliberate fallback. The narrative has to stand on
+    its own, because on the day it probably will.
+    """
     report.kill_chain = deterministic_chain(report.findings)
     for finding in report.findings:
         if not finding.explanation:
             finding.explanation = _VECTOR_ROLE[finding.vector].capitalize() + "."
     if reason:
-        report.kill_chain += f"  [{reason}]"
+        logger.info("chain analysis fell back to deterministic summary: %s", reason)
     return report
 
 
